@@ -1,0 +1,4 @@
+- name: default-netapp-api
+  host: localhost:8000
+  username: <username>
+  password: <password>

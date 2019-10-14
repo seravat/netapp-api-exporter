@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: netapp-api-exporter
+    role: monitoring
+  name: netapp-api-exporter
+  namespace: custom-monitoring
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: netapp-api-exporter
+  template:
+    metadata:
+      labels:
+        app: netapp-api-exporter
+      name: netapp-api-exporter
+    spec:
+      containers:
+        - command:
+            - /bin/sh
+            - '-c'
+            - >-
+              exec /app/netapp-api-exporter/netapp-api-exporter -c /app/netapp-api-exporter/config/netapp_filers.yaml -w 300
+              -l ":9102"
+#          env:
+#            - name: STATS_USERNAME
+#              value: admin
+          volumeMounts:
+          - mountPath: /app/netapp-api-exporter/config
+            name: netapp-api-exporter-config
+          image: >-
+            platform-monitoring/netapp-api-exporter-prometheus:v1.0
+          imagePullPolicy: IfNotPresent
+          name: netapp-api-exporter
+          ports:
+            - containerPort: 9102
+              name: scrape
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 50Mi
+            requests:
+              cpu: 100m
+              memory: 30Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+
+      volumes:
+      - name: netapp-api-exporter-config
+        configMap:
+          name: netapp-api-exporter-config
+
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        node-role.kubernetes.io/infra: 'true'
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsUser: 777
+      serviceAccount: netapp-api-exporter
+      serviceAccountName: netapp-api-exporter
+      terminationGracePeriodSeconds: 30
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: netapp-api-exporter
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: netapp-api-exporter-config
+  namespace: custom-monitoring
+data:
+  netapp_filers.yaml: |-
+    - name: default-netapp-api
+      host: localhost:8000
+      username:
+      password:
