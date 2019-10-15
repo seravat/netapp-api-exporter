@@ -17,6 +17,7 @@ type NetappVolume struct {
 	FilerName                         string
 	Vserver                           string
 	Volume                            string
+	VolumeNormalized                  string
 	Comment                           string
 	Size                              int
 	SizeTotal                         float64
@@ -191,6 +192,7 @@ func (v VolumeManager) Fetch(f Filer) (volumes []*NetappVolume, err error) {
 			if vol.VolumeIDAttributes != nil {
 				nv.Vserver = vol.VolumeIDAttributes.OwningVserverName
 				nv.Volume = vol.VolumeIDAttributes.Name
+				nv.VolumeNormalized = strings.Replace(vol.VolumeIDAttributes.Name, "_", "-", -1)
 			} else {
 				// Skip if ID Attributes missing
 				logger.Warnf("missing `VolumeIDAttributes` in %+v", vol)
