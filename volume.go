@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"strings"
 )
 
 type NetappVolume struct {
@@ -49,6 +50,7 @@ var (
 	volumeLabels = []string{
 		"vserver",
 		"volume",
+		"volume_normalized",
 		"project_id",
 		"share_id",
 	}
@@ -146,7 +148,7 @@ func (v VolumeManager) Describe(ch chan<- *prometheus.Desc) {
 
 func (v VolumeManager) Collect(ch chan<- prometheus.Metric) {
 	for _, v := range v.Volumes {
-		labels := []string{v.Vserver, v.Volume, v.ProjectID, v.ShareID}
+		labels := []string{v.Vserver, v.Volume, v.VolumeNormalized, v.ProjectID, v.ShareID}
 		for _, m := range volMetrics {
 			ch <- prometheus.MustNewConstMetric(m.desc, m.valType, m.evalFn(v), labels...)
 		}
